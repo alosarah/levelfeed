@@ -1,0 +1,64 @@
+name: LevelFeed Bots
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+
+  bot1_daily:
+    name: "Bot 1 — Daily Feed"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install feedparser requests beautifulsoup4
+
+      - name: Run Bot 1
+        run: python bot1_daily.py
+
+      - name: Commit data
+        run: |
+          git config user.name  "LevelFeed Bot"
+          git config user.email "bot@levelfeed.com"
+          git add data/news_bot1.json data/seen_bot1.json
+          git diff --cached --quiet || git commit -m "bot1: update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+
+  bot2_radar:
+    name: "Bot 2 — Indie Radar"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install feedparser requests beautifulsoup4 praw
+
+      - name: Run Bot 2
+        env:
+          REDDIT_CLIENT_ID:     ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        run: python bot2_radar.py
+
+      - name: Commit data
+        run: |
+          git config user.name  "LevelFeed Bot"
+          git config user.email "bot@levelfeed.com"
+          git add data/news_bot2.json
+          git diff --cached --quiet || git commit -m "bot2: update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
